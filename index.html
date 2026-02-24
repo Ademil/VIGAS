@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>APavan_Calculadora de Domínios — NBR 6118</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+/* ─── RESET & VARS ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #0d1117;
+  --surface:  #161b22;
+  --surface2: #1c2330;
+  --border:   #30363d;
+  --accent:   #f0a500;
+  --green:    #3fb950;
+  --red:      #f85149;
+  --blue:     #58a6ff;
+  --purple:   #bc8cff;
+  --text:     #e6edf3;
+  --muted:    #8b949e;
+  --fh: 'Syne', sans-serif;
+  --fm: 'JetBrains Mono', monospace;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--fh); min-height: 100vh; }
+
+/* ─── LAYOUT ────────────────────────────────────────────────────────────────── */
+.app { max-width: 1100px; margin: 0 auto; padding: 24px 16px 80px; }
+
+/* ─── HEADER ────────────────────────────────────────────────────────────────── */
+.header {
+  position: relative; padding: 36px 0 28px;
+  border-bottom: 1px solid var(--border); margin-bottom: 32px; overflow: hidden;
+}
+.header::before {
+  content: ''; position: absolute; top: -40px; left: -60px;
+  width: 340px; height: 200px;
+  background: radial-gradient(ellipse, rgba(240,165,0,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.header-tag { font-family: var(--fm); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+.header h1 {
+  font-size: clamp(22px,4vw,38px); font-weight: 800; line-height: 1.1;
+  background: linear-gradient(135deg,#f0a500 0%,#ff6b35 60%,#e63946 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.header p { color: var(--muted); font-size: 13px; margin-top: 6px; }
+
+/* ─── TABS ──────────────────────────────────────────────────────────────────── */
+.tabs { display: flex; gap: 4px; margin-bottom: 28px; flex-wrap: wrap; }
+.tab {
+  padding: 8px 16px; border: 1px solid var(--border); background: var(--surface);
+  color: var(--muted); font-family: var(--fh); font-size: 13px; font-weight: 600;
+  cursor: pointer; border-radius: 6px; transition: all .15s;
+}
+.tab:hover { border-color: var(--accent); color: var(--accent); }
+.tab.active { background: var(--accent); border-color: var(--accent); color: #000; }
+
+/* ─── PANELS ────────────────────────────────────────────────────────────────── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ─── GRID ──────────────────────────────────────────────────────────────────── */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+@media(max-width:680px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+
+/* ─── CARD ──────────────────────────────────────────────────────────────────── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+.card-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+}
+.card-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* ─── FIELDS ────────────────────────────────────────────────────────────────── */
+.field { margin-bottom: 14px; }
+.field label { display: block; font-family: var(--fm); font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+.field input, .field select {
+  width: 100%; padding: 9px 12px; background: var(--bg);
+  border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); font-family: var(--fm); font-size: 14px; outline: none; transition: border-color .15s;
+}
+.field input:focus, .field select:focus { border-color: var(--accent); }
+.field .unit { font-family: var(--fm); font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+/* ─── BUTTON ────────────────────────────────────────────────────────────────── */
+.btn {
+  width: 100%; padding: 12px 28px; background: var(--accent); border: none;
+  border-radius: 7px; color: #000; font-family: var(--fh); font-size: 14px;
+  font-weight: 700; cursor: pointer; letter-spacing: .5px; transition: all .15s; margin-top: 8px;
+}
+.btn:hover { background: #ffc107; transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+
+/* ─── RESULT PANEL ──────────────────────────────────────────────────────────── */
+.result-panel {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 22px; margin-top: 22px;
+}
+.domain-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 16px; border-radius: 20px;
+  font-family: var(--fm); font-size: 13px; font-weight: 700; margin-bottom: 18px;
+}
+.domain-2 { background: rgba(63,185,80,.15);  border:1px solid var(--green);  color: var(--green); }
+.domain-3 { background: rgba(88,166,255,.15); border:1px solid var(--blue);   color: var(--blue); }
+.domain-4 { background: rgba(248,81,73,.15);  border:1px solid var(--red);    color: var(--red); }
+
+.result-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(190px,1fr)); gap: 12px; }
+.result-item {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px;
+}
+.result-item.hl { border-color: var(--accent); }
+.r-label { font-family: var(--fm); font-size: 10px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+.r-value { font-family: var(--fm); font-size: 18px; font-weight: 700; color: var(--text); }
+.result-item.hl .r-value { color: var(--accent); }
+.r-unit { font-size: 11px; color: var(--muted); margin-left: 4px; font-weight: 400; }
+
+/* ─── ALERTS ────────────────────────────────────────────────────────────────── */
+.alert {
+  padding: 12px 16px; border-radius: 8px; font-size: 13px;
+  margin: 10px 0; display: flex; gap: 10px; align-items: flex-start; line-height: 1.6;
+}
+.alert-ok   { background: rgba(63,185,80,.1);  border:1px solid rgba(63,185,80,.3);  color: var(--green); }
+.alert-err  { background: rgba(248,81,73,.1);  border:1px solid rgba(248,81,73,.3);  color: var(--red); }
+.alert-warn { background: rgba(240,165,0,.1);  border:1px solid rgba(240,165,0,.3);  color: var(--accent); }
+
+/* ─── SECTION TITLE ─────────────────────────────────────────────────────────── */
+.sec-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--muted); margin: 20px 0 12px; display: flex; align-items: center; gap: 8px;
+}
+.sec-title::before { content: '//'; color: var(--accent); }
+
+/* ─── FORMULA BOX ───────────────────────────────────────────────────────────── */
+.formula-box {
+  background: var(--bg); border-left: 3px solid var(--accent);
+  border-radius: 0 6px 6px 0; padding: 10px 14px;
+  font-family: var(--fm); font-size: 12px; color: var(--muted);
+  margin: 10px 0; line-height: 1.8;
+}
+.formula-box b { color: var(--text); }
+
+/* ─── BEAM SVG ──────────────────────────────────────────────────────────────── */
+.beam-wrap { display: flex; justify-content: center; margin-bottom: 16px; }
+
+/* ─── STRAIN BARS ───────────────────────────────────────────────────────────── */
+.strain-box { background: var(--bg); border:1px solid var(--border); border-radius: 8px; padding: 14px; }
+.strain-lbl { font-family: var(--fm); font-size: 11px; margin-bottom: 4px; }
+.strain-bar-wrap { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
+.strain-bar { height: 100%; border-radius: 4px; transition: width .4s; }
+.bar-c { background: linear-gradient(90deg,#e63946,#f85149); }
+.bar-s { background: linear-gradient(90deg,#2ea043,#3fb950); }
+
+/* ─── NBR TABLE ─────────────────────────────────────────────────────────────── */
+.nbr-table { width: 100%; border-collapse: collapse; font-family: var(--fm); font-size: 12px; }
+.nbr-table th { background: var(--surface2); color: var(--accent); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+.nbr-table td { padding: 8px 12px; border-bottom: 1px solid rgba(48,54,61,.5); }
+.nbr-table tr:last-child td { border-bottom: none; }
+
+/* ─── PLACEHOLDER ───────────────────────────────────────────────────────────── */
+.placeholder { color: var(--muted); font-family: var(--fm); font-size: 13px; padding: 48px 20px; text-align: center; }
+
+.mb16 { margin-bottom: 16px; }
+.mt0  { margin-top: 0; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-tag">NBR 6118 · Concreto Armado</div>
+    <h1>APavan_Calculadora de Domínios de Deformação</h1>
+    <p>Verificação, dimensionamento e imposição de ductilidade para vigas retangulares</p>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('verif',this)">Verificação de Domínio</button>
+    <button class="tab" onclick="showTab('dim',this)">Dimensionamento (dado M<sub>k</sub>)</button>
+    <button class="tab" onclick="showTab('duct',this)">Imposição de Ductilidade</button>
+    <button class="tab" onclick="showTab('altura',this)">Menor Altura</button>
+    <button class="tab" onclick="showTab('ref',this)">Referência NBR 6118</button>
+    <button class="tab" onclick="showTab('armdupla',this)">Armadura Dupla</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PAINEL 1 — VERIFICAÇÃO DE DOMÍNIO
+  ═══════════════════════════════════════════════════════ -->
+  <div id="tab-verif" class="panel active">
+    <div class="grid2">
+      <!-- Geometria -->
+      <div class="card">
+        <div class="card-title">Geometria da Seção</div>
+        <div class="beam-wrap">
+          <svg id="svg-verif" width="170" height="160" viewBox="0 0 170 160"></svg>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>b<sub>w</sub> (cm)</label><input type="number" id="v-bw" value="20" step="1" oninput="drawBeam('verif')"><div class="unit">Largura da alma</div></div>
+          <div class="field"><label>h (cm)</label><input type="number" id="v-h" value="60" step="1" oninput="drawBeam('verif')"><div class="unit">Altura total</div></div>
+          <div class="field"><label>d (cm)</label><input type="number" id="v-d" value="54" step="1" oninput="drawBeam('verif')"><div class="unit">Altura útil</div></div>
+          <div class="field"><label>d' (cm)</label><input type="number" id="v-dp" value="6" step="1" oninput="drawBeam('verif')"><div class="unit">Cobrimento</div></div>
+        </div>
+        <div class="field"><label>A<sub>s</sub> (cm²)</label><input type="number" id="v-As" value="3.81" step="0.01"><div class="unit">Área de armadura longitudinal</div></div>
+      </div>
+      <!-- Materiais -->
+      <div class="card">
+        <div class="card-title">Materiais e Coeficientes</div>
+        <div class="field"><label>f<sub>ck</sub> (MPa)</label>
+          <select id="v-fck">
+            <option value="15">C15 — 15 MPa</option><option value="20" selected>C20 — 20 MPa</option>
+            <option value="25">C25 — 25 MPa</option><option value="30">C30 — 30 MPa</option>
+            <option value="35">C35 — 35 MPa</option><option value="40">C40 — 40 MPa</option>
+            <option value="45">C45 — 45 MPa</option><option value="50">C50 — 50 MPa</option>
+          </select>
+        </div>
+        <div class="field"><label>Aço</label>
+          <select id="v-fyk">
+            <option value="250">CA25 — f<sub>yk</sub> = 250 MPa</option>
+            <option value="500" selected>CA50 — f<sub>yk</sub> = 500 MPa</option>
+            <option value="600">CA60 — f<sub>yk</sub> = 600 MPa</option>
+          </select>
+        </div>
+        <div class="grid3">
+          <div class="field"><label>γ<sub>c</sub></label><input type="number" id="v-gc" value="1.4" step="0.05"></div>
+          <div class="field"><label>γ<sub>s</sub></label><input type="number" id="v-gs" value="1.15" step="0.05"></div>
+          <div class="field"><label>γ<sub>f</sub></label><input type="number" id="v-gf" value="1.4" step="0.05"></div>
+        </div>
+        <div class="field"><label>E<sub>s</sub> (MPa)</label><input type="number" id="v-Es" value="210000" step="1000"></div>
+        <div class="formula-box">
+          <b>Parâmetros de bloco (NBR 6118):</b><br>
+          α<sub>c</sub> = 0,85 &nbsp;|&nbsp; λ = 0,8 (f<sub>ck</sub> ≤ 50 MPa)<br>
+          ε<sub>cu</sub> = 3,5‰ &nbsp;|&nbsp; ξ<sub>lim</sub> = 0,45
+        </div>
+        <button class="btn" onclick="calcVerif()">▶ Calcular Domínio</button>
+      </div>
+    </div>
+    <!-- Resultados -->
+    <div id="res-verif" class="result-panel" style="display:none"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PAINEL 2 — DIMENSIONAMENTO
+  ═══════════════════════════════════════════════════════ -->
+  <div id="tab-dim" class="panel">
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Geometria e Momento</div>
+        <div class="beam-wrap">
+          <svg id="svg-dim" width="170" height="160" viewBox="0 0 170 160"></svg>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>b<sub>w</sub> (cm)</label><input type="number" id="d-bw" value="12" step="1" oninput="drawBeam('dim')"></div>
+          <div class="field"><label>h (cm)</label><input type="number" id="d-h" value="70" step="1" oninput="drawBeam('dim')"></div>
+          <div class="field"><label>d (cm)</label><input type="number" id="d-d" value="64" step="1" oninput="drawBeam('dim')"></div>
+          <div class="field"><label>d' (cm)</label><input type="number" id="d-dp" value="6" step="1" oninput="drawBeam('dim')"></div>
+        </div>
+        <div class="field"><label>M<sub>k</sub> (kN·cm)</label><input type="number" id="d-Mk" value="6000" step="100"><div class="unit">Momento fletor de projeto</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Materiais</div>
+        <div class="field"><label>f<sub>ck</sub> (MPa)</label>
+          <select id="d-fck">
+            <option value="15">C15</option><option value="20">C20</option>
+            <option value="25" selected>C25</option><option value="30">C30</option>
+            <option value="35">C35</option><option value="40">C40</option>
+            <option value="45">C45</option><option value="50">C50</option>
+          </select>
+        </div>
+        <div class="field"><label>Aço</label>
+          <select id="d-fyk">
+            <option value="250">CA25</option>
+            <option value="500" selected>CA50</option>
+            <option value="600">CA60</option>
+          </select>
+        </div>
+        <div class="grid3">
+          <div class="field"><label>γ<sub>c</sub></label><input type="number" id="d-gc" value="1.4" step="0.05"></div>
+          <div class="field"><label>γ<sub>s</sub></label><input type="number" id="d-gs" value="1.15" step="0.05"></div>
+          <div class="field"><label>γ<sub>f</sub></label><input type="number" id="d-gf" value="1.4" step="0.05"></div>
+        </div>
+        <div class="field"><label>E<sub>s</sub> (MPa)</label><input type="number" id="d-Es" value="210000" step="1000"></div>
+        <div class="formula-box">
+          <b>k<sub>c</sub> = b<sub>w</sub>·d²/M<sub>k</sub></b><br>
+          <b>ξ = (1/λ)·(1 − √(1 − 2·γ<sub>f</sub>/(α<sub>c</sub>·f<sub>cd</sub>·k<sub>c</sub>)))</b><br>
+          <b>A<sub>s</sub> = M<sub>k</sub>·γ<sub>f</sub> / (f<sub>yd</sub>·d·(1 − λξ/2))</b>
+        </div>
+        <button class="btn" onclick="calcDim()">▶ Dimensionar Seção</button>
+      </div>
+    </div>
+    <div id="res-dim" class="result-panel" style="display:none"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PAINEL 3 — IMPOSIÇÃO DE DUCTILIDADE
+  ═══════════════════════════════════════════════════════ -->
+  <div id="tab-duct" class="panel">
+    <div class="card mb16">
+      <div class="card-title">Conceito — Imposição de Ductilidade (NBR 6118 § 14.6.4.3)</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7">
+        Para garantir comportamento dúctil em vigas e lajes, a NBR 6118 limita a posição da linha neutra.
+        Se ξ calculado ultrapassar 0,45, adota-se ξ = 0,45 e recalculam-se A<sub>s</sub> e M<sub>k</sub>.
+      </p>
+      <div class="formula-box">
+        <b>ξ = x/d ≤ 0,45</b> → Limite geral de ductilidade<br>
+        Se ξ<sub>calc</sub> &gt; 0,45 → adotar ξ = 0,45 e recalcular A<sub>s</sub> e M<sub>k</sub>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Dados de Entrada</div>
+        <div class="beam-wrap">
+          <svg id="svg-duct" width="170" height="160" viewBox="0 0 170 160"></svg>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>b<sub>w</sub> (cm)</label><input type="number" id="u-bw" value="20" step="1" oninput="drawBeam('duct')"></div>
+          <div class="field"><label>h (cm)</label><input type="number" id="u-h" value="60" step="1" oninput="drawBeam('duct')"></div>
+          <div class="field"><label>d (cm)</label><input type="number" id="u-d" value="54" step="1" oninput="drawBeam('duct')"></div>
+          <div class="field"><label>d' (cm)</label><input type="number" id="u-dp" value="6" step="1" oninput="drawBeam('duct')"></div>
+        </div>
+        <div class="field"><label>A<sub>s</sub> fornecida (cm²)</label><input type="number" id="u-As" value="20" step="0.1"></div>
+        <div class="field"><label>f<sub>ck</sub> (MPa)</label>
+          <select id="u-fck">
+            <option value="15">C15</option><option value="20" selected>C20</option>
+            <option value="25">C25</option><option value="30">C30</option>
+            <option value="35">C35</option><option value="40">C40</option>
+          </select>
+        </div>
+        <div class="field"><label>Aço</label>
+          <select id="u-fyk">
+            <option value="250">CA25</option>
+            <option value="500" selected>CA50</option>
+            <option value="600">CA60</option>
+          </select>
+        </div>
+        <div class="grid3">
+          <div class="field"><label>γ<sub>c</sub></label><input type="number" id="u-gc" value="1.4" step="0.05"></div>
+          <div class="field"><label>γ<sub>s</sub></label><input type="number" id="u-gs" value="1.15" step="0.05"></div>
+          <div class="field"><label>γ<sub>f</sub></label><input type="number" id="u-gf" value="1.4" step="0.05"></div>
+        </div>
+        <div class="field"><label>E<sub>s</sub> (MPa)</label><input type="number" id="u-Es" value="210000" step="1000"></div>
+        <button class="btn" onclick="calcDuct()">▶ Verificar Ductilidade</button>
+      </div>
+      <div id="res-duct" class="card">
+        <div class="placeholder">Preencha os dados e clique em "Verificar Ductilidade"</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PAINEL 4 — MENOR ALTURA
+  ═══════════════════════════════════════════════════════ -->
+  <div id="tab-altura" class="panel">
+    <div class="card mb16">
+      <div class="card-title">Metodologia — Menor Altura</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7">
+        Determina a menor seção que garante ductilidade (ξ = 0,45), sem ruptura brusca do concreto.
+      </p>
+      <div class="formula-box">
+        Com ξ = 0,45: &nbsp;<b>d = √(M<sub>k</sub>·γ<sub>f</sub> / (α<sub>c</sub>·f<sub>cd</sub>·b<sub>w</sub>·λ·ξ·(1 − λξ/2)))</b><br>
+        <b>h = d + d'</b> → arredondar para múltiplo de 5 cm<br>
+        Recalcular ξ, A<sub>s</sub> e verificar taxa de armadura
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Dados de Entrada</div>
+        <div class="beam-wrap">
+          <svg id="svg-alt" width="170" height="160" viewBox="0 0 170 160"></svg>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>b<sub>w</sub> (cm)</label><input type="number" id="a-bw" value="15" step="1" oninput="drawBeam('alt')"></div>
+          <div class="field"><label>d' (cm)</label><input type="number" id="a-dp" value="6" step="1" oninput="drawBeam('alt')"></div>
+        </div>
+        <div class="field"><label>M<sub>k</sub> (kN·cm)</label><input type="number" id="a-Mk" value="10000" step="100"></div>
+        <div class="field"><label>f<sub>ck</sub> (MPa)</label>
+          <select id="a-fck">
+            <option value="15">C15</option><option value="20">C20</option>
+            <option value="25">C25</option><option value="30" selected>C30</option>
+            <option value="35">C35</option><option value="40">C40</option>
+          </select>
+        </div>
+        <div class="field"><label>Aço</label>
+          <select id="a-fyk">
+            <option value="250">CA25</option>
+            <option value="500" selected>CA50</option>
+            <option value="600">CA60</option>
+          </select>
+        </div>
+        <div class="grid3">
+          <div class="field"><label>γ<sub>c</sub></label><input type="number" id="a-gc" value="1.4" step="0.05"></div>
+          <div class="field"><label>γ<sub>s</sub></label><input type="number" id="a-gs" value="1.15" step="0.05"></div>
+          <div class="field"><label>γ<sub>f</sub></label><input type="number" id="a-gf" value="1.4" step="0.05"></div>
+        </div>
+        <div class="field"><label>E<sub>s</sub> (MPa)</label><input type="number" id="a-Es" value="210000" step="1000"></div>
+        <button class="btn" onclick="calcAltura()">▶ Calcular Menor Altura</button>
+      </div>
+      <div id="res-alt" class="card">
+        <div class="placeholder">Preencha os dados e clique em "Calcular Menor Altura"</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PAINEL 5 — REFERÊNCIA NBR 6118
+  ═══════════════════════════════════════════════════════ -->
+  <div id="tab-ref" class="panel">
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Domínios de Deformação — NBR 6118</div>
+        <table class="nbr-table">
+          <thead><tr><th>Dom.</th><th>ε<sub>cd</sub></th><th>ε<sub>sd</sub></th><th>Descrição</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>—</td><td>= 10‰</td><td>Tração pura (sem concreto comprimido)</td></tr>
+            <tr><td>2</td><td>&lt; ε<sub>cu</sub></td><td>= 10‰</td><td>Flexão — armadura plastificada (ξ &lt; ξ<sub>2lim</sub>)</td></tr>
+            <tr><td>3</td><td>= ε<sub>cu</sub></td><td>≥ ε<sub>yd</sub></td><td>Flexão — concreto no limite (ξ<sub>2lim</sub> ≤ ξ &lt; ξ<sub>3lim</sub>)</td></tr>
+            <tr><td>4</td><td>= ε<sub>cu</sub></td><td>&lt; ε<sub>yd</sub></td><td>Armadura não escoada — evitar por ductilidade</td></tr>
+            <tr><td>4a</td><td>≤ ε<sub>c2</sub></td><td>= 0</td><td>Seção totalmente comprimida, com fibra de tração = 0</td></tr>
+            <tr><td>5</td><td>ε<sub>c2</sub>..ε<sub>cu</sub></td><td>= 0</td><td>Compressão simples ou composta pura</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">Parâmetros Normativos</div>
+        <table class="nbr-table">
+          <thead><tr><th>Parâmetro</th><th>Valor</th><th>Condição</th></tr></thead>
+          <tbody>
+            <tr><td>ε<sub>cu</sub></td><td>3,5‰</td><td>Deformação última do concreto</td></tr>
+            <tr><td>ε<sub>c2</sub></td><td>2,0‰</td><td>Início da plastificação (modelo parábola)</td></tr>
+            <tr><td>ε<sub>yd</sub></td><td>f<sub>yd</sub>/E<sub>s</sub></td><td>Deformação de escoamento do aço</td></tr>
+            <tr><td>α<sub>c</sub></td><td>0,85</td><td>Redução resistência do concreto</td></tr>
+            <tr><td>λ</td><td>0,80</td><td>f<sub>ck</sub> ≤ 50 MPa</td></tr>
+            <tr><td>λ</td><td>0,80 − (f<sub>ck</sub>−50)/400</td><td>f<sub>ck</sub> &gt; 50 MPa</td></tr>
+            <tr><td>ξ<sub>lim</sub></td><td>0,45</td><td>Limite de ductilidade NBR 6118</td></tr>
+            <tr><td>ρ<sub>s,min</sub></td><td>0,15%</td><td>Taxa mínima de armadura longitudinal</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">Limites dos Domínios — CA50 (f<sub>yk</sub>=500 MPa)</div>
+        <table class="nbr-table">
+          <thead><tr><th>Limite</th><th>Fórmula</th><th>Valor (CA50)</th></tr></thead>
+          <tbody>
+            <tr><td>ξ<sub>2,lim</sub></td><td>ε<sub>cu</sub> / (ε<sub>cu</sub> + 10‰)</td><td>0,2593</td></tr>
+            <tr><td>ξ<sub>3,lim</sub></td><td>ε<sub>cu</sub> / (ε<sub>cu</sub> + f<sub>yd</sub>/E<sub>s</sub>)</td><td>≈ 0,6283</td></tr>
+            <tr><td>ξ<sub>lim,NBR</sub></td><td>Imposição de ductilidade</td><td>0,45</td></tr>
+          </tbody>
+        </table>
+        <div class="formula-box" style="margin-top:14px">
+          <b>Dom.2:</b> ξ &lt; ξ<sub>2lim</sub> → ε<sub>sd</sub> = 10‰, σ<sub>sd</sub> = f<sub>yd</sub><br>
+          <b>Dom.3:</b> ξ<sub>2lim</sub> ≤ ξ &lt; ξ<sub>3lim</sub> → ε<sub>sd</sub> = ((1−ξ)/ξ)·ε<sub>cu</sub>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Equações Fundamentais</div>
+        <div class="formula-box">
+          <b>Linha neutra adimensional (verificação):</b><br>
+          ξ = A<sub>s</sub>·f<sub>yd</sub> / (α<sub>c</sub>·f<sub>cd</sub>·b<sub>w</sub>·d·λ)<br><br>
+          <b>Momento resistente:</b><br>
+          M<sub>k</sub> = (A<sub>s</sub>·f<sub>yd</sub>/γ<sub>f</sub>)·d·(1 − λ·ξ/2)<br><br>
+          <b>Dimensionamento (dado M<sub>k</sub>):</b><br>
+          k<sub>c</sub> = b<sub>w</sub>·d²/M<sub>k</sub><br>
+          ξ = (1/λ)·(1 − √(1 − 2·γ<sub>f</sub>/(α<sub>c</sub>·f<sub>cd</sub>·k<sub>c</sub>)))<br>
+          A<sub>s</sub> = M<sub>k</sub>·γ<sub>f</sub> / (f<sub>yd</sub>·d·(1 − λξ/2))<br><br>
+          <b>Deformação na armadura (Dom.3):</b><br>
+          ε<sub>sd</sub> = ((1−ξ)/ξ)·ε<sub>cu</sub><br><br>
+          <b>Deformação na armadura (Dom.2):</b><br>
+          ε<sub>sd</sub> = 10‰ (escoamento plástico)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PAINEL 6 — ARMADURA DUPLA
+  ═══════════════════════════════════════════════════════ -->
+  <div id="tab-armdupla" class="panel">
+
+    <div class="card mb16">
+      <div class="card-title">Conceito — Armadura Dupla (NBR 6118)</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7">
+        Quando ξ calculado excede 0,45 (limite de ductilidade), a seção simples não é suficiente.
+        Adiciona-se armadura de compressão (A<sub>s,sup</sub>) para absorver o momento excedente ΔM<sub>d</sub>,
+        mantendo ξ = 0,45 na armadura de tração inferior (A<sub>s,inf</sub>).
+      </p>
+      <div class="formula-box">
+        <b>Passo 1:</b> Calcular ξ. Se ξ &gt; 0,45 → adotar ξ = 0,45 e calcular armadura dupla<br>
+        <b>Passo 2:</b> M<sub>d1</sub> = α<sub>c</sub>·f<sub>cd</sub>·b<sub>w</sub>·d²·λ·ξ·(1−λξ/2) &nbsp;→&nbsp; A<sub>s1</sub> = M<sub>d1</sub> / (f<sub>yd</sub>·d·(1−λξ/2))<br>
+        <b>Passo 3:</b> ΔM<sub>d</sub> = M<sub>di</sub> − M<sub>d1</sub> &nbsp;→&nbsp; A<sub>s2</sub> = ΔM<sub>d</sub> / (f<sub>yd</sub>·(d−d''))<br>
+        <b>Resultado:</b> A<sub>s,inf</sub> = A<sub>s1</sub> + A<sub>s2</sub> &nbsp;|&nbsp; A<sub>s,sup</sub> = A<sub>s2</sub>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <!-- ── COLUNA ESQUERDA: Geometria ── -->
+      <div class="card">
+        <div class="card-title">Geometria da Seção</div>
+        <div class="beam-wrap">
+          <svg id="svg-armdupla" width="170" height="175" viewBox="0 0 170 175"></svg>
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label>b<sub>w</sub> (cm)</label>
+            <input type="number" id="ad-bw" value="20" step="1" oninput="drawBeamDouble()">
+            <div class="unit">Largura da alma</div>
+          </div>
+          <div class="field">
+            <label>h (cm)</label>
+            <input type="number" id="ad-h" value="40" step="1" oninput="drawBeamDouble()">
+            <div class="unit">Altura total</div>
+          </div>
+        </div>
+
+        <div class="card-title" style="margin-top:6px">Cobrimento e Barras</div>
+        <div class="grid3">
+          <div class="field">
+            <label>cob (cm)</label>
+            <input type="number" id="ad-cob" value="3" step="0.5" oninput="adAutoCalc()">
+            <div class="unit">Cobrimento nominal</div>
+          </div>
+          <div class="field">
+            <label>φ<sub>t</sub> (mm)</label>
+            <input type="number" id="ad-phit" value="5" step="1" oninput="adAutoCalc()">
+            <div class="unit">Diâm. estribo</div>
+          </div>
+          <div class="field">
+            <label>esp (cm)</label>
+            <input type="number" id="ad-esp" value="3" step="0.5" oninput="adAutoCalc()">
+            <div class="unit">Espaç. entre barras</div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label>φ<sub>inf</sub> (mm)</label>
+            <input type="number" id="ad-phiinf" value="20" step="1" oninput="adAutoCalc()">
+            <div class="unit">Barra tração (estimativa)</div>
+          </div>
+          <div class="field">
+            <label>φ<sub>sup</sub> (mm)</label>
+            <input type="number" id="ad-phisup" value="12.5" step="0.5" oninput="adAutoCalc()">
+            <div class="unit">Barra compressão (estimativa)</div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label>d' (cm) <span style="color:var(--accent)">↺ auto</span></label>
+            <input type="number" id="ad-dp" value="7" step="0.1" style="border-color:var(--accent)" oninput="drawBeamDouble()">
+            <div class="unit">cob + φ<sub>t</sub>/10 + φ<sub>inf</sub>/20</div>
+          </div>
+          <div class="field">
+            <label>d'' (cm) <span style="color:var(--blue)">↺ auto</span></label>
+            <input type="number" id="ad-dpp" value="4.125" step="0.1" style="border-color:var(--blue)" oninput="drawBeamDouble()">
+            <div class="unit">cob + φ<sub>t</sub>/10 + φ<sub>sup</sub>/20</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>d (cm) <span style="color:var(--green)">↺ auto (h − d')</span></label>
+          <input type="number" id="ad-d" value="33" step="0.5" style="border-color:var(--green)" oninput="drawBeamDouble()">
+          <div class="unit">Altura útil (editável)</div>
+        </div>
+      </div>
+
+      <!-- ── COLUNA DIREITA: Materiais + Carregamento ── -->
+      <div class="card">
+        <div class="card-title">Materiais e Coeficientes</div>
+        <div class="field">
+          <label>f<sub>ck</sub> (MPa)</label>
+          <select id="ad-fck">
+            <option value="15">C15</option><option value="20">C20</option>
+            <option value="25">C25</option><option value="30" selected>C30</option>
+            <option value="35">C35</option><option value="40">C40</option>
+            <option value="45">C45</option><option value="50">C50</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Aço</label>
+          <select id="ad-fyk">
+            <option value="250">CA25</option>
+            <option value="500" selected>CA50</option>
+            <option value="600">CA60</option>
+          </select>
+        </div>
+        <div class="grid3">
+          <div class="field"><label>γ<sub>c</sub></label><input type="number" id="ad-gc" value="1.4" step="0.05"></div>
+          <div class="field"><label>γ<sub>s</sub></label><input type="number" id="ad-gs" value="1.15" step="0.05"></div>
+          <div class="field"><label>γ<sub>f</sub></label><input type="number" id="ad-gf" value="1.4" step="0.05"></div>
+        </div>
+        <div class="field"><label>E<sub>s</sub> (MPa)</label><input type="number" id="ad-Es" value="210000" step="1000"></div>
+
+        <div class="card-title" style="margin-top:10px">Carregamento</div>
+        <div class="grid2">
+          <div class="field">
+            <label>q (kN/m)</label>
+            <input type="number" id="ad-q" value="50" step="1" oninput="adCalcMk()">
+            <div class="unit">Carga distribuída</div>
+          </div>
+          <div class="field">
+            <label>l (cm)</label>
+            <input type="number" id="ad-l" value="400" step="10" oninput="adCalcMk()">
+            <div class="unit">Vão da viga</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>M<sub>k</sub> (kN·cm) <span style="color:var(--accent)">↺ q·l²/8</span></label>
+          <input type="number" id="ad-Mk" value="10000" step="100" style="border-color:var(--accent)" oninput="adCalcMdi()">
+          <div class="unit">Momento característico</div>
+        </div>
+        <div class="field">
+          <label>M<sub>di</sub> (kN·cm) <span style="color:var(--red)">↺ M<sub>k</sub>·γ<sub>f</sub></span></label>
+          <input type="number" id="ad-Mdi" value="14000" step="100" style="border-color:var(--red)">
+          <div class="unit">Momento de cálculo (editável)</div>
+        </div>
+
+        <div class="card-title" style="margin-top:10px">Verificação de 2ª Ordem (ξ<sub>δM</sub>)</div>
+        <div class="field">
+          <label>δ — coef. de redistribuição de momentos</label>
+          <select id="ad-delta">
+            <option value="0.9" selected>δ = 0,9 (estrutura de nós móveis)</option>
+            <option value="1.0">δ = 1,0 (estrutura de nós fixos)</option>
+          </select>
+        </div>
+
+        <button class="btn" onclick="calcArmDupla()">▶ Calcular Armadura Dupla</button>
+      </div>
+    </div>
+
+    <!-- Resultado -->
+    <div id="res-armdupla" class="result-panel" style="display:none"></div>
+  </div>
+
+</div><!-- /.app -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════════════════════════════ -->
+<script>
+// ── CONSTANTES NBR 6118 ────────────────────────────────────────────────────
+const ECU    = 0.0035;
+const ESD_D2 = 0.010;
+const AC     = 0.85;
+const LAMBDA = 0.8;
+const XI_LIM = 0.45;
+
+// ── UTILITÁRIOS ─────────────────────────────────────────────────────────────
+const n = (id) => parseFloat(document.getElementById(id).value) || 0;
+const fmt = (v, d=4) => (isNaN(v)||v===null) ? '—' : Number(v).toFixed(d);
+
+function fyd(fyk, gs) { return fyk / gs; }
+function fcd(fck, gc) { return fck / gc; }
+
+function getLambda(fck) {
+  return fck <= 50 ? 0.8 : 0.8 - (fck - 50) / 400;
+}
+
+function calcXi(As, FYD, FCD, bw, d, lam) {
+  return (As * FYD) / (AC * FCD * bw * d * lam);
+}
+
+function xi2lim() { return ECU / (ECU + ESD_D2); }
+
+function xi3lim(FYD_kNcm2, Es_MPa) {
+  // FYD em kN/cm², Es em MPa → converter FYD para MPa: *10
+  const eyd = (FYD_kNcm2 * 10) / Es_MPa;
+  return ECU / (ECU + eyd);
+}
+
+function getDomain(xi, x2l, x3l) {
+  if (xi <= x2l) return 2;
+  if (xi <= x3l) return 3;
+  return 4;
+}
+
+function calcStrains(xi, domain) {
+  if (domain === 2) {
+    return { esd: ESD_D2, ecd: (xi / (1 - xi)) * ESD_D2 };
+  } else {
+    return { esd: ((1 - xi) / xi) * ECU, ecd: ECU };
+  }
+}
+
+function calcMkArmadura(As, FYD, d, xi, gf, lam) {
+  return (As * FYD / gf) * d * (1 - lam * xi / 2);
+}
+
+function calcMkConcreto(FCD, bw, d, xi, gf, lam) {
+  return (AC * FCD * bw * d * d * lam * xi * (1 - lam * xi / 2)) / gf;
+}
+
+function calcAsFromMk(Mk, FYD, d, xi, gf, lam) {
+  return (Mk * gf) / (FYD * d * (1 - lam * xi / 2));
+}
+
+function domainBadge(dom) {
+  const map = {
+    2: ['domain-2', '◆ Domínio 2 — Tração com deformação plástica na armadura'],
+    3: ['domain-3', '◆ Domínio 3 — Concreto no limite de deformação'],
+    4: ['domain-4', '◆ Domínio 4 — Armadura não escoou (evitar — ruptura frágil)']
+  };
+  const [cls, txt] = map[dom] || ['domain-4', '◆ Domínio desconhecido'];
+  return `<div class="domain-badge ${cls}">${txt}</div>`;
+}
+
+function ri(label, value, unit='', hl=false, dec=4) {
+  const v = (typeof value === 'number') ? fmt(value, dec) : value;
+  return `<div class="result-item${hl?' hl':''}">
+    <div class="r-label">${label}</div>
+    <div class="r-value">${v}<span class="r-unit">${unit}</span></div>
+  </div>`;
+}
+
+function alert$(type, msg) {
+  return `<div class="alert alert-${type}">${msg}</div>`;
+}
+
+function strainBox(ecd, esd) {
+  const maxE = Math.max(ecd, esd, 0.001);
+  const pc = Math.min(ecd / maxE * 100, 100).toFixed(1);
+  const ps = Math.min(esd / maxE * 100, 100).toFixed(1);
+  return `<div class="strain-box">
+    <div style="font-family:var(--fm);font-size:10px;color:var(--muted);margin-bottom:10px;letter-spacing:1px">DIAGRAMA DE DEFORMAÇÕES</div>
+    <div class="strain-lbl" style="color:var(--red)">ε<sub>cd</sub> = ${(ecd*1000).toFixed(3)} ‰</div>
+    <div class="strain-bar-wrap"><div class="strain-bar bar-c" style="width:${pc}%"></div></div>
+    <div class="strain-lbl" style="color:var(--green)">ε<sub>sd</sub> = ${(esd*1000).toFixed(3)} ‰</div>
+    <div class="strain-bar-wrap"><div class="strain-bar bar-s" style="width:${ps}%"></div></div>
+  </div>`;
+}
+
+function secTitle(t) {
+  return `<div class="sec-title">${t}</div>`;
+}
+
+// ── DESENHO DA VIGA ─────────────────────────────────────────────────────────
+function drawBeam(prefix) {
+  const pfx = { verif:'v-', dim:'d-', duct:'u-', alt:'a-' }[prefix];
+  const svgId = { verif:'svg-verif', dim:'svg-dim', duct:'svg-duct', alt:'svg-alt' }[prefix];
+  const svg = document.getElementById(svgId);
+  if (!svg) return;
+
+  const bw = parseFloat(document.getElementById(pfx+'bw')?.value) || 20;
+  const h  = parseFloat(document.getElementById(pfx+'h')?.value)  || 60;
+  const d  = parseFloat(document.getElementById(pfx+'d')?.value)  || 54;
+  const dp = parseFloat(document.getElementById(pfx+'dp')?.value) || 6;
+
+  const W = 170, H = 155;
+  const maxDim = Math.max(h, bw * 5, 30);
+  const scale  = 110 / maxDim;
+  const sh = h  * scale;
+  const sb = bw * scale;
+  const sd = d  * scale;
+  const cx = W / 2;
+  const ty = 15;
+
+  let html = '';
+  // Section rect
+  html += `<rect x="${cx - sb/2}" y="${ty}" width="${sb}" height="${sh}"
+    fill="none" stroke="#30363d" stroke-width="1.5" rx="1"/>`;
+  // d annotation
+  html += `<line x1="${cx + sb/2 + 6}" y1="${ty}" x2="${cx + sb/2 + 6}" y2="${ty + sd}"
+    stroke="#58a6ff" stroke-width="1" marker-end="url(#arr)"/>`;
+  html += `<text x="${cx + sb/2 + 14}" y="${ty + sd/2 + 4}" fill="#58a6ff"
+    font-size="10" font-family="JetBrains Mono">d</text>`;
+  // Steel bar
+  html += `<circle cx="${cx}" cy="${ty + sh - dp*scale}" r="5" fill="#f0a500"/>`;
+  // bw label
+  html += `<text x="${cx}" y="${ty + sh + 16}" text-anchor="middle"
+    fill="#8b949e" font-size="9" font-family="JetBrains Mono">bw=${bw}cm</text>`;
+  // h label
+  html += `<text x="12" y="${ty + sh/2 + 4}" text-anchor="middle"
+    fill="#8b949e" font-size="9" font-family="JetBrains Mono"
+    transform="rotate(-90,12,${ty+sh/2})">h=${h}cm</text>`;
+
+  svg.innerHTML = `<defs>
+    <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#58a6ff"/>
+    </marker>
+  </defs>` + html;
+}
+
+function drawBeamWithX(svgId, bw, h, d, dp, x) {
+  const svg = document.getElementById(svgId);
+  if (!svg) return;
+  const W = 170, H = 155;
+  const maxDim = Math.max(h, bw * 5, 30);
+  const scale  = 110 / maxDim;
+  const sh = h  * scale;
+  const sb = bw * scale;
+  const sd = d  * scale;
+  const sx = x  * scale;
+  const cx = W / 2;
+  const ty = 15;
+
+  let html = '';
+  // Compressed zone fill
+  if (x > 0) {
+    html += `<rect x="${cx - sb/2}" y="${ty}" width="${sb}" height="${Math.min(sx, sh)}"
+      fill="rgba(240,165,0,0.15)" stroke="none" rx="1"/>`;
+  }
+  // Section rect
+  html += `<rect x="${cx - sb/2}" y="${ty}" width="${sb}" height="${sh}"
+    fill="none" stroke="#30363d" stroke-width="1.5" rx="1"/>`;
+  // Neutral axis
+  if (x > 0 && sx <= sh) {
+    html += `<line x1="${cx - sb/2 - 8}" y1="${ty + sx}" x2="${cx + sb/2 + 8}" y2="${ty + sx}"
+      stroke="#f0a500" stroke-width="1.4" stroke-dasharray="4,2"/>`;
+    html += `<text x="${cx - sb/2 - 18}" y="${ty + sx + 4}"
+      fill="#f0a500" font-size="9" font-family="JetBrains Mono">x</text>`;
+  }
+  // d annotation
+  html += `<line x1="${cx + sb/2 + 6}" y1="${ty}" x2="${cx + sb/2 + 6}" y2="${ty + sd}"
+    stroke="#58a6ff" stroke-width="1"/>`;
+  html += `<text x="${cx + sb/2 + 14}" y="${ty + sd/2 + 4}" fill="#58a6ff"
+    font-size="10" font-family="JetBrains Mono">d</text>`;
+  // Steel bar
+  html += `<circle cx="${cx}" cy="${ty + sh - dp * scale}" r="5" fill="#f0a500"/>`;
+  // Labels
+  html += `<text x="${cx}" y="${ty + sh + 16}" text-anchor="middle"
+    fill="#8b949e" font-size="9" font-family="JetBrains Mono">bw=${bw}cm</text>`;
+  html += `<text x="12" y="${ty + sh/2 + 4}" text-anchor="middle"
+    fill="#8b949e" font-size="9" font-family="JetBrains Mono"
+    transform="rotate(-90,12,${ty+sh/2})">h=${h}cm</text>`;
+
+  svg.innerHTML = html;
+}
+
+// ── TAB NAVIGATION ─────────────────────────────────────────────────────────
+function showTab(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── PAINEL 1: VERIFICAÇÃO ──────────────────────────────────────────────────
+function calcVerif() {
+  const bw = n('v-bw'), h = n('v-h'), d = n('v-d'), dp = n('v-dp');
+  const fck = n('v-fck'), fyk = n('v-fyk');
+  const gc = n('v-gc'), gs = n('v-gs'), gf = n('v-gf'), Es = n('v-Es');
+  const As = n('v-As');
+
+  const lam = getLambda(fck);
+  const FYD = fyd(fyk, gs) / 10;       // kN/cm²  (MPa/10)
+  const FCD = fcd(fck, gc) / 10;       // kN/cm²
+  const XI2 = xi2lim();
+  const XI3 = xi3lim(FYD, Es);
+  const xi  = calcXi(As, FYD, FCD, bw, d, lam);
+  const dom = getDomain(xi, XI2, XI3);
+  const x   = xi * d;
+  const Mk  = calcMkArmadura(As, FYD, d, xi, gf, lam);
+  const { esd, ecd } = calcStrains(xi, dom);
+  const sigma_sd_kNcm2 = Math.min(esd * Es / 10, FYD); // kN/cm²
+  const rho_s = (As / (bw * d)) * 100;
+
+  // Update SVG with neutral axis
+  drawBeamWithX('svg-verif', bw, h, d, dp, x);
+
+  let html = domainBadge(dom);
+
+  if (xi > XI_LIM)
+    html += alert$('err', `⚠ ξ = ${fmt(xi)} > ξ<sub>lim</sub> = 0,45. A seção NÃO atende à imposição de ductilidade da NBR 6118!`);
+  else
+    html += alert$('ok', `✔ ξ = ${fmt(xi)} ≤ ξ<sub>lim</sub> = 0,45. Seção em conformidade com a NBR 6118.`);
+
+  if (rho_s < 0.15)
+    html += alert$('warn', `⚠ Taxa de armadura ρ<sub>s</sub> = ${fmt(rho_s,4)}% &lt; ρ<sub>s,min</sub> = 0,15% (NBR 6118)`);
+
+  html += secTitle('Linha Neutra Adimensional');
+  html += `<div class="result-grid">
+    ${ri('ξ calculado', xi, '', true)}
+    ${ri('ξ₂,lim', XI2, '', false)}
+    ${ri('ξ₃,lim', XI3, '', false)}
+    ${ri('ξ_lim NBR 6118', XI_LIM, '', false, 2)}
+    ${ri('x — linha neutra', x, 'cm', true, 2)}
+  </div>`;
+
+  html += secTitle('Esforços e Armadura');
+  html += `<div class="result-grid">
+    ${ri('M<sub>k</sub> resistente', Mk, 'kN·cm', true, 2)}
+    ${ri('M<sub>k</sub>', Mk/100, 'kN·m', false, 2)}
+    ${ri('f<sub>cd</sub>', FCD, 'kN/cm²', false, 4)}
+    ${ri('f<sub>yd</sub>', FYD, 'kN/cm²', false, 4)}
+    ${ri('A<sub>s</sub>', As, 'cm²', false, 2)}
+    ${ri('ρ<sub>s</sub>', rho_s, '%', false, 4)}
+  </div>`;
+
+  html += secTitle('Deformações e Tensões');
+  html += `<div class="grid2 mt0">
+    ${strainBox(ecd, esd)}
+    <div class="result-grid" style="align-content:start">
+      ${ri('ε<sub>cd</sub>', ecd*1000, '‰', false, 3)}
+      ${ri('ε<sub>sd</sub>', esd*1000, '‰', false, 3)}
+      ${ri('σ<sub>sd</sub>', sigma_sd_kNcm2, 'kN/cm²', true, 2)}
+    </div>
+  </div>`;
+
+  const panel = document.getElementById('res-verif');
+  panel.innerHTML = html;
+  panel.style.display = 'block';
+}
+
+// ── PAINEL 2: DIMENSIONAMENTO ──────────────────────────────────────────────
+function calcDim() {
+  const bw = n('d-bw'), h = n('d-h'), d = n('d-d'), dp = n('d-dp');
+  const fck = n('d-fck'), fyk = n('d-fyk');
+  const gc = n('d-gc'), gs = n('d-gs'), gf = n('d-gf'), Es = n('d-Es');
+  const Mk = n('d-Mk');
+
+  const lam = getLambda(fck);
+  const FYD = fyd(fyk, gs) / 10;
+  const FCD = fcd(fck, gc) / 10;
+  const XI2 = xi2lim();
+  const XI3 = xi3lim(FYD, Es);
+
+  const kc  = (1 * bw * d * d) / Mk;    // cm³/kN
+  const term = (2 / AC) * (gf / (FCD * kc));
+  const xi   = (1 / lam) * (1 - Math.sqrt(Math.max(0, 1 - term)));
+  const dom  = getDomain(xi, XI2, XI3);
+  const x    = xi * d;
+  const As   = calcAsFromMk(Mk, FYD, d, xi, gf, lam);
+  const { esd, ecd } = calcStrains(xi, dom);
+  const sigma_sd = Math.min(esd * Es / 10, FYD);
+  const rho_s = (As / (bw * d)) * 100;
+
+  drawBeamWithX('svg-dim', bw, h, d, dp, x);
+
+  let html = domainBadge(dom);
+
+  if (xi > XI_LIM)
+    html += alert$('err', `⚠ ξ = ${fmt(xi)} > 0,45. Ver aba "Imposição de Ductilidade"!`);
+  else
+    html += alert$('ok', `✔ Seção atende à ductilidade mínima da NBR 6118 (ξ ≤ 0,45)`);
+
+  if (rho_s < 0.15)
+    html += alert$('warn', `⚠ ρ<sub>s</sub> = ${fmt(rho_s,4)}% &lt; ρ<sub>s,min</sub> = 0,15%`);
+
+  html += secTitle('Resultado do Dimensionamento');
+  html += `<div class="result-grid">
+    ${ri('k<sub>c</sub>', kc, 'cm³/kN', false, 3)}
+    ${ri('ξ calculado', xi, '', true)}
+    ${ri('ξ<sub>lim</sub> NBR', XI_LIM, '', false, 2)}
+    ${ri('x — linha neutra', x, 'cm', true, 2)}
+    ${ri('A<sub>s</sub> necessária', As, 'cm²', true, 3)}
+    ${ri('ρ<sub>s</sub>', rho_s, '%', false, 4)}
+  </div>`;
+
+  html += secTitle('Deformações');
+  html += `<div class="grid2 mt0">
+    ${strainBox(ecd, esd)}
+    <div class="result-grid" style="align-content:start">
+      ${ri('ε<sub>cd</sub>', ecd*1000, '‰', false, 3)}
+      ${ri('ε<sub>sd</sub>', esd*1000, '‰', false, 3)}
+      ${ri('σ<sub>sd</sub>', sigma_sd, 'kN/cm²', true, 2)}
+      ${ri('f<sub>yd</sub>', FYD, 'kN/cm²', false, 4)}
+      ${ri('f<sub>cd</sub>', FCD, 'kN/cm²', false, 4)}
+    </div>
+  </div>`;
+
+  const panel = document.getElementById('res-dim');
+  panel.innerHTML = html;
+  panel.style.display = 'block';
+}
+
+// ── PAINEL 3: DUCTILIDADE ──────────────────────────────────────────────────
+function calcDuct() {
+  const bw = n('u-bw'), h = n('u-h'), d = n('u-d'), dp = n('u-dp');
+  const fck = n('u-fck'), fyk = n('u-fyk');
+  const gc = n('u-gc'), gs = n('u-gs'), gf = n('u-gf'), Es = n('u-Es');
+  const As = n('u-As');
+
+  const lam = getLambda(fck);
+  const FYD = fyd(fyk, gs) / 10;
+  const FCD = fcd(fck, gc) / 10;
+  const XI2 = xi2lim();
+  const XI3 = xi3lim(FYD, Es);
+
+  const xiRaw = calcXi(As, FYD, FCD, bw, d, lam);
+  const needsRedesign = xiRaw > XI_LIM;
+  const xiAdotado = needsRedesign ? XI_LIM : xiRaw;
+  const x = xiAdotado * d;
+
+  const Mk = calcMkConcreto(FCD, bw, d, xiAdotado, gf, lam);
+  const AsNeeded = needsRedesign ? calcAsFromMk(Mk, FYD, d, xiAdotado, gf, lam) : As;
+
+  const domAdotado = getDomain(xiAdotado, XI2, XI3);
+  const { esd, ecd } = calcStrains(xiAdotado, domAdotado);
+  const sigma_sd = Math.min(esd * Es / 10, FYD);
+
+  drawBeamWithX('svg-duct', bw, h, d, dp, x);
+
+  let html = '';
+
+  if (needsRedesign) {
+    html += alert$('err', `⚠ ξ<sub>calc</sub> = ${fmt(xiRaw)} > ξ<sub>lim</sub> = 0,45<br>
+      Seção necessita redimensionamento. Adotado ξ = 0,45.`);
+  } else {
+    html += alert$('ok', `✔ ξ = ${fmt(xiRaw)} ≤ 0,45 — Ductilidade satisfeita sem intervenção.`);
+  }
+
+  html += secTitle('Linha Neutra');
+  html += `<div class="result-grid">
+    ${ri('ξ calculado', xiRaw, '', false)}
+    ${ri('ξ adotado', xiAdotado, '', true)}
+    ${ri('x adotado', x, 'cm', true, 2)}
+  </div>`;
+
+  html += secTitle('Capacidade com ξ adotado');
+  html += `<div class="result-grid">
+    ${ri('M<sub>k</sub> capacidade', Mk, 'kN·cm', true, 2)}
+    ${ri('M<sub>k</sub>', Mk/100, 'kN·m', false, 2)}
+    ${needsRedesign ? ri('A<sub>s</sub> necessária', AsNeeded, 'cm²', true, 3) : ri('A<sub>s</sub> fornecida', As, 'cm²', false, 2)}
+  </div>`;
+
+  html += secTitle('Deformações');
+  html += strainBox(ecd, esd);
+  html += `<div class="result-grid" style="margin-top:12px">
+    ${ri('ε<sub>cd</sub>', ecd*1000, '‰', false, 3)}
+    ${ri('ε<sub>sd</sub>', esd*1000, '‰', false, 3)}
+    ${ri('σ<sub>sd</sub>', sigma_sd, 'kN/cm²', true, 2)}
+  </div>`;
+
+  document.getElementById('res-duct').innerHTML = html;
+}
+
+// ── PAINEL 4: MENOR ALTURA ─────────────────────────────────────────────────
+function calcAltura() {
+  const bw = n('a-bw'), dp = n('a-dp');
+  const fck = n('a-fck'), fyk = n('a-fyk');
+  const gc = n('a-gc'), gs = n('a-gs'), gf = n('a-gf'), Es = n('a-Es');
+  const Mk = n('a-Mk');
+
+  const lam = getLambda(fck);
+  const FYD = fyd(fyk, gs) / 10;
+  const FCD = fcd(fck, gc) / 10;
+  const XI2 = xi2lim();
+  const XI3 = xi3lim(FYD, Es);
+
+  // Usando ξ = 0.45 para menor d
+  const xiFixed = XI_LIM;
+  const denom = AC * FCD * bw * lam * xiFixed * (1 - lam * xiFixed / 2);
+  const d2 = (Mk * gf) / denom;
+  const dMinTeor = Math.sqrt(d2);
+  const hCalc = dMinTeor + dp;
+  // Arredondar h para múltiplo de 5 cm acima
+  const hAdot = Math.ceil(hCalc / 5) * 5;
+  const dAdot = hAdot - dp;
+
+  // Recalcular com d adotado
+  const kc = (1 * bw * dAdot * dAdot) / Mk;
+  const term = (2 / AC) * (gf / (FCD * kc));
+  const xiAdot = (1 / lam) * (1 - Math.sqrt(Math.max(0, 1 - term)));
+  const x = xiAdot * dAdot;
+  const As = calcAsFromMk(Mk, FYD, dAdot, xiAdot, gf, lam);
+  const dom = getDomain(xiAdot, XI2, XI3);
+  const { esd, ecd } = calcStrains(xiAdot, dom);
+  const sigma_sd = Math.min(esd * Es / 10, FYD);
+  const rho_s = (As / (bw * dAdot)) * 100;
+
+  drawBeamWithX('svg-alt', bw, hAdot, dAdot, dp, x);
+
+  let html = alert$('ok', '✔ Altura mínima calculada com ξ = 0,45 (imposição de ductilidade NBR 6118)');
+
+  html += secTitle('Dimensões Resultantes');
+  html += `<div class="result-grid">
+    ${ri('d mínimo (teórico)', dMinTeor, 'cm', false, 2)}
+    ${ri('h<sub>calc</sub> = d+d\'', hCalc, 'cm', false, 2)}
+    ${ri('h adotado (múlt. 5)', hAdot, 'cm', true, 0)}
+    ${ri('d adotado', dAdot, 'cm', true, 0)}
+  </div>`;
+
+  html += secTitle(`Dimensionamento com h = ${hAdot} cm`);
+  html += `<div class="result-grid">
+    ${ri('k<sub>c</sub>', kc, 'cm³/kN', false, 3)}
+    ${ri('ξ recalculado', xiAdot, '', false)}
+    ${ri('x — linha neutra', x, 'cm', false, 2)}
+    ${ri('A<sub>s</sub> necessária', As, 'cm²', true, 2)}
+    ${ri('ρ<sub>s</sub>', rho_s, '%', false, 4)}
+  </div>`;
+
+  if (rho_s < 0.15)
+    html += alert$('warn', `⚠ ρ<sub>s</sub> = ${fmt(rho_s,4)}% &lt; ρ<sub>s,min</sub> = 0,15%`);
+
+  html += secTitle('Deformações');
+  html += strainBox(ecd, esd);
+  html += `<div class="result-grid" style="margin-top:12px">
+    ${ri('ε<sub>cd</sub>', ecd*1000, '‰', false, 3)}
+    ${ri('ε<sub>sd</sub>', esd*1000, '‰', false, 3)}
+    ${ri('σ<sub>sd</sub>', sigma_sd, 'kN/cm²', true, 2)}
+  </div>`;
+
+  document.getElementById('res-alt').innerHTML = html;
+}
+
+// ── PAINEL 6: ARMADURA DUPLA ───────────────────────────────────────────────
+
+// Desenha seção com armadura dupla (inferior + superior)
+function drawBeamDouble() {
+  const svg = document.getElementById('svg-armdupla');
+  if (!svg) return;
+  const bw  = parseFloat(document.getElementById('ad-bw')?.value)  || 20;
+  const h   = parseFloat(document.getElementById('ad-h')?.value)   || 40;
+  const d   = parseFloat(document.getElementById('ad-d')?.value)   || 33;
+  const dp  = parseFloat(document.getElementById('ad-dp')?.value)  || 7;
+  const dpp = parseFloat(document.getElementById('ad-dpp')?.value) || 4.125;
+
+  const W = 170, H = 170;
+  const maxDim = Math.max(h, bw * 5, 30);
+  const scale  = 120 / maxDim;
+  const sh = h   * scale;
+  const sb = bw  * scale;
+  const sd = d   * scale;
+  const sdp  = dp  * scale;
+  const sdpp = dpp * scale;
+  const cx = W / 2;
+  const ty = 15;
+
+  let html = '';
+  // Section outline
+  html += `<rect x="${cx-sb/2}" y="${ty}" width="${sb}" height="${sh}"
+    fill="none" stroke="#30363d" stroke-width="1.5" rx="1"/>`;
+  // d annotation
+  html += `<line x1="${cx+sb/2+6}" y1="${ty}" x2="${cx+sb/2+6}" y2="${ty+sd}"
+    stroke="#3fb950" stroke-width="1"/>`;
+  html += `<text x="${cx+sb/2+16}" y="${ty+sd/2+4}" fill="#3fb950"
+    font-size="10" font-family="JetBrains Mono">d</text>`;
+  // Inferior steel bar (yellow)
+  html += `<circle cx="${cx}" cy="${ty+sh-sdp}" r="5" fill="#f0a500"/>`;
+  html += `<text x="${cx-sb/2-18}" y="${ty+sh-sdp+4}" fill="#f0a500"
+    font-size="9" font-family="JetBrains Mono">inf</text>`;
+  // Superior steel bar (blue)
+  html += `<circle cx="${cx}" cy="${ty+sdpp}" r="4" fill="#58a6ff"/>`;
+  html += `<text x="${cx-sb/2-18}" y="${ty+sdpp+4}" fill="#58a6ff"
+    font-size="9" font-family="JetBrains Mono">sup</text>`;
+  // d' and d'' markers
+  html += `<line x1="${cx+sb/2+6}" y1="${ty+sh-sdp}" x2="${cx+sb/2+28}" y2="${ty+sh-sdp}"
+    stroke="#f0a500" stroke-width="0.8" stroke-dasharray="2,2"/>`;
+  html += `<line x1="${cx+sb/2+6}" y1="${ty+sdpp}" x2="${cx+sb/2+28}" y2="${ty+sdpp}"
+    stroke="#58a6ff" stroke-width="0.8" stroke-dasharray="2,2"/>`;
+  // Labels
+  html += `<text x="${cx}" y="${ty+sh+16}" text-anchor="middle"
+    fill="#8b949e" font-size="9" font-family="JetBrains Mono">bw=${bw}cm</text>`;
+  html += `<text x="12" y="${ty+sh/2+4}" text-anchor="middle"
+    fill="#8b949e" font-size="9" font-family="JetBrains Mono"
+    transform="rotate(-90,12,${ty+sh/2})">h=${h}cm</text>`;
+
+  svg.innerHTML = html;
+}
+
+// Calcula d', d'' e d automaticamente a partir de cobrimento/barras
+function adAutoCalc() {
+  const cob    = parseFloat(document.getElementById('ad-cob')?.value)    || 3;
+  const phit   = parseFloat(document.getElementById('ad-phit')?.value)   || 5;
+  const phiinf = parseFloat(document.getElementById('ad-phiinf')?.value) || 20;
+  const phisup = parseFloat(document.getElementById('ad-phisup')?.value) || 12.5;
+  const h      = parseFloat(document.getElementById('ad-h')?.value)      || 40;
+
+  const phit_cm   = phit   / 10;   // mm → cm
+  const phiinf_cm = phiinf / 10;
+  const phisup_cm = phisup / 10;
+
+  const dp  = cob + phit_cm + phiinf_cm / 2;
+  const dpp = cob + phit_cm + phisup_cm / 2;
+  const d   = h - dp;
+
+  document.getElementById('ad-dp').value  = dp.toFixed(3);
+  document.getElementById('ad-dpp').value = dpp.toFixed(3);
+  document.getElementById('ad-d').value   = d.toFixed(3);
+
+  drawBeamDouble();
+}
+
+// Calcula Mk = q·l²/8 e propaga Mdi = Mk·γf
+function adCalcMk() {
+  const q  = parseFloat(document.getElementById('ad-q')?.value)  || 0;
+  const l  = parseFloat(document.getElementById('ad-l')?.value)  || 0;
+  const gf = parseFloat(document.getElementById('ad-gf')?.value) || 1.4;
+  if (q > 0 && l > 0) {
+    // q em kN/m, l em cm → l em m = l/100
+    const lm = l / 100;
+    const Mk = (q * lm * lm) / 8 * 100; // kN·cm (×100: kN·m → kN·cm)
+    document.getElementById('ad-Mk').value  = Mk.toFixed(0);
+    document.getElementById('ad-Mdi').value = (Mk * gf).toFixed(0);
+  }
+}
+
+// Propaga Mdi = Mk·γf quando Mk é editado manualmente
+function adCalcMdi() {
+  const Mk = parseFloat(document.getElementById('ad-Mk')?.value) || 0;
+  const gf = parseFloat(document.getElementById('ad-gf')?.value) || 1.4;
+  document.getElementById('ad-Mdi').value = (Mk * gf).toFixed(0);
+}
+
+// Cálculo principal — Armadura Dupla
+function calcArmDupla() {
+  const bw  = n('ad-bw'),  h  = n('ad-h');
+  const d   = n('ad-d'),   dp = n('ad-dp'),  dpp = n('ad-dpp');
+  const fck = n('ad-fck'), fyk = n('ad-fyk');
+  const gc  = n('ad-gc'),  gs  = n('ad-gs'), gf  = n('ad-gf'), Es = n('ad-Es');
+  const Mdi = n('ad-Mdi');
+  const delta = parseFloat(document.getElementById('ad-delta').value) || 0.9;
+
+  const lam = getLambda(fck);
+  const FYD = fyd(fyk, gs) / 10;   // kN/cm²
+  const FCD = fcd(fck, gc) / 10;   // kN/cm²
+  const XI2 = xi2lim();
+  const XI3 = xi3lim(FYD, Es);
+
+  // ── 1. ξ simples (como se fosse seção simples, sem γf no kc pois Mdi já é majorado)
+  const kc_simples = (bw * d * d) / Mdi;    // cm³/kN  (usando Mdi)
+  const term_simp  = (2 / AC) * (gf / (FCD * kc_simples));
+  const xiSimples  = (1 / lam) * (1 - Math.sqrt(Math.max(0, 1 - term_simp)));
+  const domSimples = getDomain(xiSimples, XI2, XI3);
+
+  const precisaArmDupla = xiSimples > XI_LIM;
+
+  // ── 2. Adotar ξ = 0,45
+  const xi = XI_LIM;
+  const x  = xi * d;
+
+  // ── 3. Momento resistido pelo bloco com ξ=0,45 (sem γf — força interna)
+  const Md1 = AC * FCD * bw * d * d * lam * xi * (1 - lam * xi / 2);
+
+  // ── 4. Armadura simples para Md1
+  const As1 = Md1 / (FYD * d * (1 - lam * xi / 2));
+
+  // ── 5. Momento excedente e armadura de compressão
+  const deltaMd = Mdi - Md1;
+  const As2     = (deltaMd > 0) ? (deltaMd / (FYD * (d - dpp))) : 0;
+
+  // ── 6. Armaduras finais
+  const As_inf = As1 + As2;
+  const As_sup = As2;
+
+  // ── 7. Taxas de armadura
+  const rho_inf = (As_inf / (bw * d)) * 100;
+  const rho_sup = (As_sup / (bw * d)) * 100;
+
+  // ── 8. Deformações (dom.3 pois ξ=0,45 → dom.3/4)
+  const dom = getDomain(xi, XI2, XI3);
+  const { esd, ecd } = calcStrains(xi, dom);
+  const sigma_sd = Math.min(esd * Es / 10, FYD);
+
+  // ── 9. Verificação ξδM (2ª ordem — redistribuição de momentos)
+  const xiDeltaM = (deltaMd > 0)
+    ? (1 / lam) * (1 - Math.sqrt(Math.max(0, 1 - (2 * deltaMd) / (AC * FCD * bw * d * d))))
+    : 0;
+  const xiDeltaM_lim = (delta - 0.44) / 1.25;
+  const okDeltaM = xiDeltaM <= xiDeltaM_lim;
+
+  // ── 10. Largura interna livre ah
+  const phiinf_cm = (parseFloat(document.getElementById('ad-phiinf')?.value) || 20) / 10;
+  const phit_cm   = (parseFloat(document.getElementById('ad-phit')?.value)   || 5)  / 10;
+  const cob       = n('ad-cob');
+  const ah = bw - 2 * cob - 2 * phit_cm - 2 * phiinf_cm;
+
+  // ── Actualiza SVG
+  drawBeamDouble();
+
+  // ── Monta HTML de resultados
+  let html = '';
+
+  if (!precisaArmDupla) {
+    html += alert$('warn', `ℹ ξ<sub>simples</sub> = ${fmt(xiSimples)} ≤ 0,45. A seção SIMPLES seria suficiente, mas o cálculo de armadura dupla foi realizado conforme solicitado.`);
+  } else {
+    html += alert$('err', `⚠ ξ<sub>simples</sub> = ${fmt(xiSimples)} > 0,45 — Seção em Domínio ${domSimples}. Armadura dupla necessária!`);
+    html += alert$('ok',  `✔ Adotado ξ = 0,45 (limite ductilidade NBR 6118) → seção com armadura dupla.`);
+  }
+
+  // Etapa 1 — Linha neutra simples
+  html += secTitle('Etapa 1 — Verificação da Seção Simples');
+  html += `<div class="result-grid">
+    ${ri('k<sub>c</sub> (simples)', kc_simples, 'cm³/kN', false, 3)}
+    ${ri('ξ simples', xiSimples, '', false)}
+    ${ri('ξ<sub>lim</sub> NBR 6118', XI_LIM, '', false, 2)}
+    ${ri('Domínio simples', 'Dom. ' + domSimples, '', false, 0)}
+  </div>`;
+
+  // Etapa 2 — Momento do bloco
+  html += secTitle('Etapa 2 — Bloco de Compressão com ξ = 0,45');
+  html += `<div class="result-grid">
+    ${ri('ξ adotado', xi, '', true, 2)}
+    ${ri('x = ξ·d', x, 'cm', true, 2)}
+    ${ri('M<sub>d1</sub> (bloco)', Md1, 'kN·cm', true, 2)}
+    ${ri('M<sub>d1</sub>', Md1/100, 'kN·m', false, 2)}
+    ${ri('A<sub>s1</sub>', As1, 'cm²', true, 2)}
+  </div>`;
+
+  // Etapa 3 — Momento excedente e armadura de compressão
+  html += secTitle('Etapa 3 — Momento Excedente e Armadura de Compressão');
+  html += `<div class="result-grid">
+    ${ri('M<sub>di</sub> (projeto)', Mdi, 'kN·cm', false, 2)}
+    ${ri('ΔM<sub>d</sub> = M<sub>di</sub>−M<sub>d1</sub>', deltaMd, 'kN·cm', true, 2)}
+    ${ri('d\u2033 (centroide sup)', dpp, 'cm', false, 3)}
+    ${ri('d \u2212 d\u2033', d - dpp, 'cm', false, 2)}
+    ${ri('A<sub>s2</sub>', As2, 'cm²', true, 2)}
+  </div>`;
+
+  // Etapa 4 — Resultado final
+  html += secTitle('Etapa 4 — Armaduras Finais');
+  html += `<div class="result-grid">
+    ${ri('A<sub>s,inf</sub> = A<sub>s1</sub>+A<sub>s2</sub>', As_inf, 'cm²', true, 2)}
+    ${ri('A<sub>s,sup</sub> = A<sub>s2</sub>', As_sup, 'cm²', true, 2)}
+    ${ri('ρ<sub>s,inf</sub>', rho_inf, '%', false, 4)}
+    ${ri('ρ<sub>s,sup</sub>', rho_sup, '%', false, 4)}
+    ${ri('a<sub>h</sub> (largura livre)', ah, 'cm', false, 2)}
+  </div>`;
+
+  if (rho_inf < 0.15)
+    html += alert$('warn', `⚠ ρ<sub>s,inf</sub> = ${fmt(rho_inf,4)}% &lt; ρ<sub>s,min</sub> = 0,15% (NBR 6118)`);
+  else
+    html += alert$('ok', `✔ ρ<sub>s,inf</sub> = ${fmt(rho_inf,4)}% ≥ ρ<sub>s,min</sub> = 0,15%`);
+
+  // Etapa 5 — Deformações
+  html += secTitle('Deformações da Seção com ξ = 0,45');
+  html += `<div class="grid2 mt0">
+    ${strainBox(ecd, esd)}
+    <div class="result-grid" style="align-content:start">
+      ${ri('ε<sub>cd</sub> (concreto)', ecd*1000, '‰', false, 3)}
+      ${ri('ε<sub>sd</sub> (armadura)', esd*1000, '‰', false, 3)}
+      ${ri('σ<sub>sd</sub>', sigma_sd, 'kN/cm²', true, 2)}
+      ${ri('f<sub>yd</sub>', FYD, 'kN/cm²', false, 4)}
+    </div>
+  </div>`;
+
+  // Etapa 6 — Verificação ξδM
+  html += secTitle('Verificação de 2ª Ordem — ξ<sub>δM</sub>');
+  html += `<div class="result-grid">
+    ${ri('δ adotado', delta, '', false, 2)}
+    ${ri('ξ<sub>δM</sub>', xiDeltaM, '', okDeltaM ? false : false, 4)}
+    ${ri('ξ<sub>δM,lim</sub> = (δ−0,44)/1,25', xiDeltaM_lim, '', false, 3)}
+  </div>`;
+  if (deltaMd <= 0) {
+    html += alert$('ok', '✔ ΔM<sub>d</sub> ≤ 0 — verificação de ξ<sub>δM</sub> não aplicável.');
+  } else if (okDeltaM) {
+    html += alert$('ok', `✔ ξ<sub>δM</sub> = ${fmt(xiDeltaM)} ≤ ξ<sub>δM,lim</sub> = ${fmt(xiDeltaM_lim,3)} — Verificação de 2ª ordem satisfeita.`);
+  } else {
+    html += alert$('err', `⚠ ξ<sub>δM</sub> = ${fmt(xiDeltaM)} > ξ<sub>δM,lim</sub> = ${fmt(xiDeltaM_lim,3)} — Revisar seção ou redistribuição!`);
+  }
+
+  // Resumo final
+  html += secTitle('Resumo — Detalhamento da Armadura');
+  html += `<div class="formula-box">
+    <b>Armadura inferior:</b> A<sub>s,inf</sub> = ${fmt(As_inf,2)} cm² &nbsp;|&nbsp;
+    ρ<sub>s,inf</sub> = ${fmt(rho_inf,4)}%<br>
+    <b>Armadura superior:</b> A<sub>s,sup</sub> = ${fmt(As_sup,2)} cm² &nbsp;|&nbsp;
+    ρ<sub>s,sup</sub> = ${fmt(rho_sup,4)}%<br>
+    <b>Linha neutra:</b> x = ${fmt(x,2)} cm &nbsp;(ξ = 0,45)<br>
+    <b>d' real adotado:</b> ${fmt(dp,3)} cm &nbsp;|&nbsp; <b>d'' real adotado:</b> ${fmt(dpp,3)} cm<br>
+    <b>a<sub>h</sub> (alma livre):</b> ${fmt(ah,2)} cm
+  </div>`;
+
+  const panel = document.getElementById('res-armdupla');
+  panel.innerHTML = html;
+  panel.style.display = 'block';
+}
+
+// ── INICIALIZAÇÃO ──────────────────────────────────────────────────────────
+(function init() {
+  drawBeam('verif');
+  drawBeam('dim');
+  drawBeam('duct');
+  drawBeam('alt');
+  adAutoCalc();   // inicializa d', d'', d e SVG da armadura dupla
+  adCalcMk();     // inicializa Mk e Mdi a partir de q e l
+})();
+</script>
+</body>
+</html>
